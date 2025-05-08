@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cash & Bank Book</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #ffd700;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h2 {
+      border-bottom: 2px solid #ffd700;
+      padding-bottom: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 30px;
+    }
+    th, td {
+      border: 1px solid #ffd700;
+      padding: 8px;
+      text-align: center;
+    }
+    input, select {
+      padding: 6px;
+      margin: 4px;
+      border: 2px solid #ffd700;
+      border-radius: 4px;
+      background-color: #222;
+      color: #ffd700;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #ffd700;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+    /* Added Data Cart styles */
+    .checkbox-group {
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
+      margin-top: 0;
+    }
+    #cartButton {
+      background-color: #333;
+      color: #ffd700;
+      border: 1px solid #ffd700;
+    }
+    #cartButton:not([disabled]) {
+      background-color: #ffd700;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="section">
+    <h2>Part A: Cash Book</h2>
+    <form id="cashForm">
+      <input type="date" id="cashDate" required />
+      <input type="text" id="cashDetails" placeholder="Details" required />
+      <select id="cashType" required onchange="toggleCashAmount()">
+        <option value="">Cash In/Out</option>
+        <option value="in">In</option>
+        <option value="out">Out</option>
+      </select>
+      <input type="number" id="cashAmount" placeholder="Amount" />
+      <input type="text" id="cashNotes" placeholder="Notes" />
+      <button type="submit">Add Entry</button>
+    </form>
+    <table id="cashTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Details</th>
+          <th>Cash In</th>
+          <th>Cash Out</th>
+          <th>Balance</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="downloadCSV('cash')">Download Cash Book CSV</button>
+    <button onclick="downloadJSON('cash')">Download Cash Book JSON</button>
+  </div>
+
+  <div class="section">
+    <h2>Part B: Bank Book</h2>
+    <form id="bankForm">
+      <input type="date" id="bankDate" required />
+      <input type="text" id="bankName" placeholder="Bank Name" required />
+      <input type="text" id="bankDetails" placeholder="Details" required />
+      <select id="bankType" required onchange="toggleBankAmount()">
+        <option value="">Bank In/Out</option>
+        <option value="in">In</option>
+        <option value="out">Out</option>
+      </select>
+      <input type="number" id="bankAmount" placeholder="Amount" />
+      <input type="text" id="bankNotes" placeholder="Notes" />
+      <button type="submit">Add Entry</button>
+    </form>
+    <table id="bankTable">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Bank Name</th>
+          <th>Details</th>
+          <th>Bank In</th>
+          <th>Bank Out</th>
+          <th>Balance</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <button onclick="downloadCSV('bank')">Download Bank Book CSV</button>
+    <button onclick="downloadJSON('bank')">Download Bank Book JSON</button>
+  </div>
+
+  <!-- Added Data Cart Section -->
+  <div class="checkbox-group">
+    <input type="checkbox" id="tallyCheckbox" onchange="toggleCartButton()">
+    <label for="tallyCheckbox">I have verified the data</label>
+  </div>
+  <button id="cartButton" onclick="addToCart()" disabled>Add to Data Cart 🛒</button>
+
+  <script>
+    let cashBalance = 0;
+    let bankBalance = 0;
+    const cashData = [];
+    const bankData = [];
+
+    // Data Cart Functions
+    function toggleCartButton() {
+      const checkbox = document.getElementById("tallyCheckbox");
+      const cartButton = document.getElementById("cartButton");
+      cartButton.disabled = !checkbox.checked;
+    }
+
+    function addToCart() {
+      if (cashData.length === 0 && bankData.length === 0) {
+        alert("No data to add to cart!");
+        return;
+      }
+
+      const cartData = {
+        cash: cashData,
+        bank: bankData,
+        timestamp: new Date().toISOString()
+      };
+
+      let cart = JSON.parse(localStorage.getItem("financeDataCart")) || [];
+      cart.push(cartData);
+      localStorage.setItem("financeDataCart", JSON.stringify(cart));
+      
+      alert(`Added to cart! Total entries: Cash (${cashData.length}), Bank (${bankData.length})`);
+    }
+
+    // Original Functions
+    document.getElementById("cashForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const date = cashDate.value;
+      const details = cashDetails.value;
+      const type = cashType.value;
+      const amount = Number(cashAmount.value);
+      const notes = cashNotes.value;
+
+      let cashIn = "0", cashOut = "0";
+      if (type === "in") {
+        cashIn = amount;
+        cashBalance += amount;
+      } else {
+        cashOut = amount;
+        cashBalance -= amount;
+      }
+
+      const row = [date, details, cashIn, cashOut, cashBalance, notes];
+      cashData.push(row);
+      appendRow("cashTable", row);
+      cashForm.reset();
+    });
+
+    document.getElementById("bankForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const date = bankDate.value;
+      const bankName = bankName.value;
+      const details = bankDetails.value;
+      const type = bankType.value;
+      const amount = Number(bankAmount.value);
+      const notes = bankNotes.value;
+
+      let bankIn = "0", bankOut = "0";
+      if (type === "in") {
+        bankIn = amount;
+        bankBalance += amount;
+      } else {
+        bankOut = amount;
+        bankBalance -= amount;
+      }
+
+      const row = [date, bankName, details, bankIn, bankOut, bankBalance, notes];
+      bankData.push(row);
+      appendRow("bankTable", row);
+      bankForm.reset();
+    });
+
+    function appendRow(tableId, rowData) {
+      const row = document.createElement("tr");
+      rowData.forEach(data => {
+        const td = document.createElement("td");
+        td.textContent = data;
+        row.appendChild(td);
+      });
+      document.querySelector(`#${tableId} tbody`).appendChild(row);
+    }
+
+    function downloadCSV(type) {
+      const data = type === 'cash' ? cashData : bankData;
+      const headers = type === 'cash' ? ["Date", "Details", "Cash In", "Cash Out", "Balance", "Notes"] : ["Date", "Bank Name", "Details", "Bank In", "Bank Out", "Balance", "Notes"];
+      let csv = headers.join(",") + "\n";
+      data.forEach(row => {
+        csv += row.join(",") + "\n";
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${type}_book.csv`;
+      a.click();
+    }
+
+    function downloadJSON(type) {
+      const data = type === 'cash' ? cashData : bankData;
+      const headers = type === 'cash' ? ["Date", "Details", "Cash In", "Cash Out", "Balance", "Notes"] : ["Date", "Bank Name", "Details", "Bank In", "Bank Out", "Balance", "Notes"];
+      const jsonData = data.map(row => Object.fromEntries(row.map((val, i) => [headers[i], val])));
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${type}_book.json`;
+      a.click();
+    }
+  </script>
+</body>
+</html>

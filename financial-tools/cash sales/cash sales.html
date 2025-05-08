@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cash Sales Table</title>
+  <style>
+    html, body {
+      background-color: #484848;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      color: #facc15;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #000;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+    h1, label, p {
+      color: #facc15;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: #1a1a1a;
+      color: #facc15;
+      border: 1px solid #facc15;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #facc15;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #eab308;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      color: #facc15;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #facc15;
+      text-align: left;
+    }
+    th {
+      background: #111;
+    }
+    .note {
+      font-size: 0.9em;
+      color: #ccc;
+      margin-top: 10px;
+    }
+    /* Added Data Cart styles */
+    .checkbox-group {
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
+      margin-top: 0;
+    }
+    #cartButton {
+      background-color: #333;
+      color: #facc15;
+      border: 1px solid #facc15;
+    }
+    #cartButton:not([disabled]) {
+      background-color: #facc15;
+      color: #000;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Cash Sales Table</h1>
+    <p>Record your sales data and download as CSV or JSON.</p>
+
+    <label>Date:</label>
+    <input type="date" id="saleDate">
+
+    <label>Buyer Name / Bill No.:</label>
+    <input type="text" id="buyer">
+
+    <label>Item Sold:</label>
+    <input type="text" id="item">
+
+    <label>Quantity:</label>
+    <input type="number" id="quantity" min="1">
+
+    <label>Rate (₹):</label>
+    <input type="number" id="rate" step="0.01" min="0">
+
+    <label>Payment Mode:</label>
+    <select id="paymentMode">
+      <option value="Cash">Cash</option>
+      <option value="Bank">Bank</option>
+      <option value="UPI">UPI</option>
+      <option value="Card">Card</option>
+    </select>
+
+    <label>Notes:</label>
+    <input type="text" id="notes" placeholder="Additional information">
+
+    <button onclick="addSale()">Add Sale</button>
+    <button onclick="downloadSalesCSV()">Download CSV</button>
+    <button onclick="downloadSalesJSON()">Download JSON (Raw Data)</button>
+    <p class="note">Note: JSON contains raw backup data for AI tools or apps in case CSV isn't working well.</p>
+
+    <!-- Added Data Cart Section -->
+    <div class="checkbox-group">
+      <input type="checkbox" id="tallyCheckbox" onchange="toggleCartButton()">
+      <label for="tallyCheckbox">I have verified the data</label>
+    </div>
+    <button id="cartButton" onclick="addToCart()" disabled>Add to Data Cart 🛒</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Buyer / Bill No.</th>
+          <th>Item Sold</th>
+          <th>Qty</th>
+          <th>Rate (₹)</th>
+          <th>Total (₹)</th>
+          <th>Payment Mode</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="salesBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const sales = [];
+
+    // Data Cart Functions
+    function toggleCartButton() {
+      const checkbox = document.getElementById("tallyCheckbox");
+      const cartButton = document.getElementById("cartButton");
+      cartButton.disabled = !checkbox.checked;
+    }
+
+    function addToCart() {
+      if (sales.length === 0) {
+        alert("No sales data to add to cart!");
+        return;
+      }
+
+      const cartData = {
+        sales: sales,
+        timestamp: new Date().toISOString()
+      };
+
+      let cart = JSON.parse(localStorage.getItem("salesDataCart")) || [];
+      cart.push(cartData);
+      localStorage.setItem("salesDataCart", JSON.stringify(cart));
+      
+      alert(`Added ${sales.length} sales to cart!`);
+    }
+
+    // Original Functions
+    function addSale() {
+      const date = document.getElementById('saleDate').value;
+      const buyer = document.getElementById('buyer').value;
+      const item = document.getElementById('item').value;
+      const qty = parseFloat(document.getElementById('quantity').value);
+      const rate = parseFloat(document.getElementById('rate').value);
+      const payment = document.getElementById('paymentMode').value;
+      const notes = document.getElementById('notes').value;
+
+      if (!date || !buyer || !item || isNaN(qty) || isNaN(rate)) {
+        alert("Please fill out all required fields correctly.");
+        return;
+      }
+
+      const total = qty * rate;
+      sales.push({ date, buyer, item, qty, rate, total, payment, notes });
+      updateSalesTable();
+
+      // Clear form
+      document.getElementById('saleDate').value = '';
+      document.getElementById('buyer').value = '';
+      document.getElementById('item').value = '';
+      document.getElementById('quantity').value = '';
+      document.getElementById('rate').value = '';
+      document.getElementById('notes').value = '';
+    }
+
+    function updateSalesTable() {
+      const body = document.getElementById('salesBody');
+      body.innerHTML = '';
+
+      sales.forEach(sale => {
+        const row = `<tr>
+          <td>${sale.date}</td>
+          <td>${sale.buyer}</td>
+          <td>${sale.item}</td>
+          <td>${sale.qty}</td>
+          <td>₹${sale.rate.toFixed(2)}</td>
+          <td>₹${sale.total.toFixed(2)}</td>
+          <td>${sale.payment}</td>
+          <td>${sale.notes || '-'}</td>
+        </tr>`;
+        body.innerHTML += row;
+      });
+    }
+
+    function downloadSalesCSV() {
+      let csv = "Date,Buyer/Bill No.,Item Sold,Quantity,Rate,Total,Payment Mode,Notes\n";
+      sales.forEach(sale => {
+        csv += `${sale.date},${sale.buyer},${sale.item},${sale.qty},${sale.rate},${sale.total},${sale.payment},"${sale.notes || ''}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cash_sales_table.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadSalesJSON() {
+      const json = JSON.stringify(sales, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cash_sales_table_raw.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

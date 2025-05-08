@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Credit Sales Table</title>
+  <style>
+    html, body {
+      background-color: #484848;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      color: #facc15;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #000;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    }
+    h1, label, p {
+      color: #facc15;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      background: #1a1a1a;
+      color: #facc15;
+      border: 1px solid #facc15;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #facc15;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #eab308;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      color: #facc15;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #facc15;
+      text-align: left;
+    }
+    th {
+      background: #111;
+    }
+    .note {
+      font-size: 0.9em;
+      color: #ccc;
+      margin-top: 10px;
+    }
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .checkbox-container input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+      transform: scale(1.2);
+    }
+    .cart-section {
+      margin-top: 30px;
+      border-top: 1px solid #facc15;
+      padding-top: 20px;
+    }
+    .notes-column {
+      width: 200px;
+    }
+    .action-column {
+      width: 80px;
+    }
+    #cartSection {
+      display: none;
+    }
+    #addToCartButton {
+      background: #4CAF50;
+    }
+    #addToCartButton:hover {
+      background: #45a049;
+    }
+    #addToCartButton:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Credit Sales Table</h1>
+    <p>Track credit transactions with payment status and due dates.</p>
+
+    <label>Date:</label>
+    <input type="date" id="creditDate">
+
+    <label>Buyer Name / Bill No.:</label>
+    <input type="text" id="creditBuyer">
+
+    <label>Item / Service Sold:</label>
+    <input type="text" id="creditItem">
+
+    <label>Quantity:</label>
+    <input type="number" id="creditQty" min="1">
+
+    <label>Rate (₹):</label>
+    <input type="number" id="creditRate" step="0.01" min="0">
+
+    <label>Payment Due Date:</label>
+    <input type="date" id="dueDate">
+
+    <label>Status:</label>
+    <select id="paymentStatus" onchange="togglePartialField()">
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+      <option value="Partial">Partial</option>
+    </select>
+
+    <div id="partialAmountContainer" style="display: none;">
+      <label>Amount Paid (₹):</label>
+      <input type="number" id="partialAmount" step="0.01" min="0">
+    </div>
+
+    <label>Notes:</label>
+    <textarea id="creditNotes" rows="2"></textarea>
+
+    <button onclick="addCreditSale()">Add Credit Sale</button>
+    <button onclick="downloadCreditCSV()">Download CSV</button>
+    <button onclick="downloadCreditJSON()">Download JSON (Raw Data)</button>
+
+    <div class="checkbox-container">
+      <input type="checkbox" id="tallyCheckbox" onchange="toggleAddToCartButton()">
+      <label for="tallyCheckbox">I have verified the data</label>
+    </div>
+
+    <button id="addToCartButton" onclick="addToCart()" disabled>Add to Data Cart</button>
+    <button onclick="viewCart()">View Cart</button>
+    <button onclick="clearCart()">Clear Cart</button>
+
+    <p class="note">Note: JSON is raw backup data for AI tools in case CSV is not recognized properly.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Buyer / Bill No.</th>
+          <th>Item / Service</th>
+          <th>Qty</th>
+          <th>Rate (₹)</th>
+          <th>Total (₹)</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Amount Paid (if Partial)</th>
+          <th class="notes-column">Notes</th>
+          <th class="action-column">Action</th>
+        </tr>
+      </thead>
+      <tbody id="creditTableBody"></tbody>
+    </table>
+
+    <div class="cart-section" id="cartSection">
+      <h2>Data Cart</h2>
+      <p>Items ready for export: <span id="cartCount">0</span></p>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Buyer / Bill No.</th>
+            <th>Item / Service</th>
+            <th>Qty</th>
+            <th>Rate (₹)</th>
+            <th>Total (₹)</th>
+            <th>Due Date</th>
+            <th>Status</th>
+            <th>Amount Paid (if Partial)</th>
+            <th class="notes-column">Notes</th>
+          </tr>
+        </thead>
+        <tbody id="cartTableBody"></tbody>
+      </table>
+      <button onclick="downloadCartCSV()">Download Cart CSV</button>
+      <button onclick="downloadCartJSON()">Download Cart JSON</button>
+    </div>
+  </div>
+
+  <script>
+    const creditSales = [];
+    const dataCart = [];
+
+    function togglePartialField() {
+      const status = document.getElementById('paymentStatus').value;
+      const container = document.getElementById('partialAmountContainer');
+      container.style.display = status === 'Partial' ? 'block' : 'none';
+    }
+
+    function toggleAddToCartButton() {
+      const checkbox = document.getElementById('tallyCheckbox');
+      const button = document.getElementById('addToCartButton');
+      button.disabled = !checkbox.checked;
+    }
+
+    function addCreditSale() {
+      const date = document.getElementById('creditDate').value;
+      const buyer = document.getElementById('creditBuyer').value;
+      const item = document.getElementById('creditItem').value;
+      const qty = parseFloat(document.getElementById('creditQty').value);
+      const rate = parseFloat(document.getElementById('creditRate').value);
+      const due = document.getElementById('dueDate').value;
+      const status = document.getElementById('paymentStatus').value;
+      const notes = document.getElementById('creditNotes').value;
+      let partialPaid = "";
+
+      if (!date || !buyer || !item || isNaN(qty) || isNaN(rate) || !due) {
+        alert("Please fill out all fields correctly.");
+        return;
+      }
+
+      const total = qty * rate;
+
+      if (status === "Partial") {
+        partialPaid = parseFloat(document.getElementById('partialAmount').value);
+        if (isNaN(partialPaid)) {
+          alert("Please enter amount paid.");
+          return;
+        }
+      }
+
+      creditSales.push({ date, buyer, item, qty, rate, total, due, status, partialPaid, notes });
+      updateCreditTable();
+
+      // Clear form
+      document.getElementById('creditDate').value = '';
+      document.getElementById('creditBuyer').value = '';
+      document.getElementById('creditItem').value = '';
+      document.getElementById('creditQty').value = '';
+      document.getElementById('creditRate').value = '';
+      document.getElementById('dueDate').value = '';
+      document.getElementById('paymentStatus').value = 'Paid';
+      document.getElementById('partialAmountContainer').style.display = 'none';
+      document.getElementById('partialAmount').value = '';
+      document.getElementById('creditNotes').value = '';
+      document.getElementById('tallyCheckbox').checked = false;
+      toggleAddToCartButton();
+    }
+
+    function updateCreditTable() {
+      const body = document.getElementById('creditTableBody');
+      body.innerHTML = '';
+
+      creditSales.forEach((sale, index) => {
+        const row = `<tr>
+          <td>${sale.date}</td>
+          <td>${sale.buyer}</td>
+          <td>${sale.item}</td>
+          <td>${sale.qty}</td>
+          <td>₹${sale.rate.toFixed(2)}</td>
+          <td>₹${sale.total.toFixed(2)}</td>
+          <td>${sale.due}</td>
+          <td>${sale.status}</td>
+          <td>${sale.status === 'Partial' ? `₹${sale.partialPaid.toFixed(2)}` : ''}</td>
+          <td class="notes-column">${sale.notes}</td>
+          <td class="action-column"><button onclick="removeSale(${index})">Remove</button></td>
+        </tr>`;
+        body.innerHTML += row;
+      });
+    }
+
+    function removeSale(index) {
+      if (confirm("Are you sure you want to remove this sale?")) {
+        creditSales.splice(index, 1);
+        updateCreditTable();
+      }
+    }
+
+    function addToCart() {
+      if (creditSales.length === 0) {
+        alert("No sales to add to cart.");
+        return;
+      }
+
+      dataCart.push(...creditSales);
+      creditSales.length = 0; // Clear the sales array
+      updateCreditTable();
+      updateCartCount();
+      alert(`${dataCart.length} items in cart!`);
+    }
+
+    function viewCart() {
+      const cartSection = document.getElementById('cartSection');
+      const cartBody = document.getElementById('cartTableBody');
+      
+      if (dataCart.length === 0) {
+        alert("Cart is empty.");
+        cartSection.style.display = 'none';
+        return;
+      }
+
+      cartBody.innerHTML = '';
+      dataCart.forEach(sale => {
+        const row = `<tr>
+          <td>${sale.date}</td>
+          <td>${sale.buyer}</td>
+          <td>${sale.item}</td>
+          <td>${sale.qty}</td>
+          <td>₹${sale.rate.toFixed(2)}</td>
+          <td>₹${sale.total.toFixed(2)}</td>
+          <td>${sale.due}</td>
+          <td>${sale.status}</td>
+          <td>${sale.status === 'Partial' ? `₹${sale.partialPaid.toFixed(2)}` : ''}</td>
+          <td class="notes-column">${sale.notes}</td>
+        </tr>`;
+        cartBody.innerHTML += row;
+      });
+
+      cartSection.style.display = 'block';
+      updateCartCount();
+    }
+
+    function clearCart() {
+      if (dataCart.length === 0 || confirm("Are you sure you want to clear the cart?")) {
+        dataCart.length = 0;
+        document.getElementById('cartSection').style.display = 'none';
+        updateCartCount();
+        alert("Cart cleared.");
+      }
+    }
+
+    function updateCartCount() {
+      document.getElementById('cartCount').textContent = dataCart.length;
+    }
+
+    function downloadCreditCSV() {
+      if (creditSales.length === 0) {
+        alert("No sales to download.");
+        return;
+      }
+      
+      let csv = "Date,Buyer/Bill No.,Item/Service,Quantity,Rate,Total,Due Date,Status,Amount Paid (if Partial),Notes\n";
+      creditSales.forEach(sale => {
+        csv += `${sale.date},${sale.buyer},"${sale.item.replace(/"/g, '""')}",${sale.qty},${sale.rate},${sale.total},${sale.due},${sale.status},${sale.status === 'Partial' ? sale.partialPaid : ''},"${sale.notes.replace(/"/g, '""')}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'credit_sales_table.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadCreditJSON() {
+      if (creditSales.length === 0) {
+        alert("No sales to download.");
+        return;
+      }
+      
+      const json = JSON.stringify(creditSales, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'credit_sales_table_raw.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadCartCSV() {
+      if (dataCart.length === 0) {
+        alert("Cart is empty.");
+        return;
+      }
+      
+      let csv = "Date,Buyer/Bill No.,Item/Service,Quantity,Rate,Total,Due Date,Status,Amount Paid (if Partial),Notes\n";
+      dataCart.forEach(sale => {
+        csv += `${sale.date},${sale.buyer},"${sale.item.replace(/"/g, '""')}",${sale.qty},${sale.rate},${sale.total},${sale.due},${sale.status},${sale.status === 'Partial' ? sale.partialPaid : ''},"${sale.notes.replace(/"/g, '""')}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'credit_sales_cart.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadCartJSON() {
+      if (dataCart.length === 0) {
+        alert("Cart is empty.");
+        return;
+      }
+      
+      const json = JSON.stringify(dataCart, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'credit_sales_cart.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

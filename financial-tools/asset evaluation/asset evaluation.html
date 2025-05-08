@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Valuation</title>
+  <style>
+    body {
+      background-color: #484848;
+      font-family: Arial, sans-serif;
+      color: #facc15;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background-color: #000;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    h1,
+    h2,
+    p {
+      color: #facc15;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      background: #1a1a1a;
+      border: 1px solid #facc15;
+      color: #facc15;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #facc15;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #eab308;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      color: #facc15;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border: 1px solid #facc15;
+    }
+
+    th {
+      background-color: #111;
+    }
+
+    .checkbox-group {
+      margin: 15px 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
+      margin-top: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Asset Valuation</h1>
+
+    <div class="form-group"><label for="date">Date:</label><input type="date" id="date"></div>
+    <div class="form-group"><label for="assetName">Asset Name:</label><input type="text" id="assetName"></div>
+    <div class="form-group">
+      <label for="type">Type:</label>
+      <select id="type">
+        <option value="Residential building">Residential building</option>
+        <option value="Non residential buildings">Non residential buildings</option>
+        <option value="Temporary Structures">Temporary Structures</option>
+        <option value="Furniture and fittings">Furniture and fittings</option>
+        <option value="General Plant and machinery">General Plant and machinery</option>
+        <option value="Computers and computer software">Computers and computer software</option>
+        <option value="Air conditioners">Air conditioners</option>
+        <option value="Office Appliances">Office Appliances</option>
+        <option value="Motor Cars (not used for hire)">Motor Cars (not used for hire)</option>
+        <option value="Motor buses / lorries / taxis (used for hire)">Motor buses / lorries / taxis (used for hire)</option>
+        <option value="Energy saving devices">Energy saving devices</option>
+        <option value="Intangible assets">Intangible assets</option>
+        <option value="Land">Land</option>
+      </select>
+    </div>
+    <div class="form-group"><label for="purchaseValue">Purchase Value:</label><input type="number" id="purchaseValue"></div>
+    <div class="form-group"><label for="purchaseDate">Purchase Date:</label><input type="date" id="purchaseDate"></div>
+    <div class="form-group"><label for="currentValue">Current Year Value:</label><input type="number" id="currentValue"></div>
+    <div class="form-group"><label for="notes">Notes (Use/Repairs/Sale etc):</label><input type="text" id="notes"></div>
+
+    <button onclick="addAsset()">Add Entry</button>
+    <button onclick="downloadCSV()">Download CSV</button>
+    <button onclick="downloadJSON()">Download JSON</button>
+
+    <div class="checkbox-group">
+      <input type="checkbox" id="tallyCheckbox" onchange="toggleCartButton()">
+      <label for="tallyCheckbox">I have tallied the data</label>
+    </div>
+    <button id="cartButton" onclick="addToCart()" disabled>Add to Data Cart 🛒</button>
+
+    <h2>Asset Records</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Asset Name</th>
+          <th>Type</th>
+          <th>Purchase Value</th>
+          <th>Purchase Date</th>
+          <th>Depreciation Rate</th>
+          <th>Current Year Value</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="assetTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const depreciationRates = {
+      "Residential building": 5,
+      "Non residential buildings": 10,
+      "Temporary Structures": 40,
+      "Furniture and fittings": 10,
+      "General Plant and machinery": 15,
+      "Computers and computer software": 40,
+      "Air conditioners": 15,
+      "Office Appliances": 15,
+      "Motor Cars (not used for hire)": 15,
+      "Motor buses / lorries / taxis (used for hire)": 30,
+      "Energy saving devices": 40,
+      "Intangible assets": 25,
+      "Land": 0
+    };
+
+    let assets = [];
+
+    window.onload = () => {
+      const cached = localStorage.getItem("assetToolData");
+      if (cached) {
+        assets = JSON.parse(cached);
+        renderTable();
+      }
+    };
+
+    function calculateDepreciationRate(type, date, purchaseDate) {
+      const purchase = new Date(purchaseDate);
+      const current = new Date(date);
+      const days = (current - purchase) / (1000 * 60 * 60 * 24);
+      let rate = depreciationRates[type] || 0;
+      return days < 180 ? rate / 2 : rate;
+    }
+
+    function addAsset() {
+      const date = document.getElementById('date').value;
+      const assetName = document.getElementById('assetName').value;
+      const type = document.getElementById('type').value;
+      const purchaseValue = parseFloat(document.getElementById('purchaseValue').value);
+      const purchaseDate = document.getElementById('purchaseDate').value;
+      const currentValue = parseFloat(document.getElementById('currentValue').value);
+      const notes = document.getElementById('notes').value;
+
+      if (!date || !assetName || !type || isNaN(purchaseValue) || !purchaseDate || isNaN(currentValue)) {
+        alert("Please fill in all required fields correctly.");
+        return;
+      }
+
+      const depreciationRate = calculateDepreciationRate(type, date, purchaseDate);
+      assets.push({ date, assetName, type, purchaseValue, purchaseDate, depreciationRate, currentValue, notes });
+
+      localStorage.setItem("assetToolData", JSON.stringify(assets));
+      renderTable();
+
+      document.querySelectorAll("input").forEach(input => input.value = "");
+      document.getElementById('type').value = "Residential building";
+    }
+
+    function renderTable() {
+      const table = document.getElementById('assetTable');
+      table.innerHTML = '';
+      assets.forEach(a => {
+        table.innerHTML += `
+          <tr>
+            <td>${a.date}</td>
+            <td>${a.assetName}</td>
+            <td>${a.type}</td>
+            <td>₹${a.purchaseValue.toFixed(2)}</td>
+            <td>${a.purchaseDate}</td>
+            <td>${a.depreciationRate}%</td>
+            <td>₹${a.currentValue.toFixed(2)}</td>
+            <td>${a.notes}</td>
+          </tr>`;
+      });
+    }
+
+    function downloadCSV() {
+      let csv = "Date,Asset Name,Type,Purchase Value,Purchase Date,Depreciation Rate,Current Year Value,Notes\n";
+      assets.forEach(a => {
+        csv += `${a.date},${a.assetName},${a.type},${a.purchaseValue},${a.purchaseDate},${a.depreciationRate},${a.currentValue},${a.notes}\n`;
+      });
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "asset_valuation.csv";
+      link.click();
+    }
+
+    function downloadJSON() {
+      const blob = new Blob([JSON.stringify(assets, null, 2)], { type: "application/json" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "asset_valuation.json";
+      link.click();
+    }
+
+    function toggleCartButton() {
+      const checkbox = document.getElementById("tallyCheckbox");
+      const cartButton = document.getElementById("cartButton");
+      cartButton.disabled = !checkbox.checked;
+    }
+
+    function addToCart() {
+      alert("Assets added to data cart successfully!");
+      if (assets.length === 0) {
+        alert("There is no data to add to the cart.");
+        return;
+      }
+
+      let cart = JSON.parse(localStorage.getItem("assetDataCart")) || [];
+      cart = cart.concat(assets);
+      localStorage.setItem("assetDataCart", JSON.stringify(cart));
+      alert("Data successfully added to the cart!");
+    }
+  </script>
+</body>
+</html>
