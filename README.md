@@ -1,6 +1,6 @@
 # 💼 Financial Tools Suite
 
-This repository contains **12 front-end financial tools** I built during my **2nd year of B.Tech in Computer Science & Engineering (Data Science)**. These tools were originally designed for my **startup project**, which aimed to simplify personal and business finance management for Indian users.
+This repository contains **13 front-end financial tools** I built during my **2nd year of B.Tech in Computer Science & Engineering (Data Science)**. These tools were originally designed for my **startup project**, which aimed to simplify personal and business finance management for Indian users.
 
 ---
 
