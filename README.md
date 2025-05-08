@@ -1,4 +1,60 @@
-# financial-tools-suite
-The 12 financial tools were built by me in my second of college persuing Bachelor of Technology Computer Science and Engineering (Data Science) . They are the front end that were initially meant for my startup website offering users a way to tabulate and auto calculate queries regarding their finances. They all had a data cart function which when clicked by the user , add's the live table data to a local data cache . This cache data was then planned to be dumped to an AI to be able to condense all of it and generate a financial report the user can submit to the Indian Income Tax department . Our vision was to enable the common man to be able to start businesses or keep financial track records without worries of getting overwhelmed . The tools were the front end for with all automatic calculations embedded within the HTML and Javascript code itself . We had planned to make the backend so that the user could store their fanancial records in the startup tool itself after they had created an account and logged in . These tools were later scrapped for an even more efficient single tool we plan to deploy with our startup . I leveraged multiple AI tools like Chatgpt , DeepSeek , Claude , Loveable and Mistral AI along with my own knowledge of HTML , CSSS and Javascript  to code , debug , test and run these tools . These tools have functional buttons to remove entries and then download the live data table as CSV or JSON if the user prefers upload data manually to any AI or change the data for their convinience . 
+# 💼 Financial Tools Suite
 
-All the tools are built focusing on Indian laws and financial system to make financing easier for the everyday user . These may be scrapped tools but I am showcasing them to put forward my skills for Front End development leveraging AI .
+This repository contains **12 front-end financial tools** I built during my **2nd year of B.Tech in Computer Science & Engineering (Data Science)**. These tools were originally designed for my **startup project**, which aimed to simplify personal and business finance management for Indian users.
+
+---
+
+## 🛠️ Project Overview
+
+Each tool is a standalone web-based application with:
+- **Auto-calculation logic** embedded directly in the HTML/JavaScript.
+- A **"Data Cart"** feature to cache live user table inputs in the browser.
+- Export functionality for **CSV** and **JSON** formats.
+- UI optimized for clarity and usability.
+
+---
+
+## 🚀 Startup Vision Behind the Tools
+
+The tools were part of a broader mission:
+> 🧾 To empower everyday Indians to manage finances, tabulate records, and generate IT-compliant reports — without needing an accountant or advanced knowledge.
+
+Originally, we planned to:
+- Integrate AI to **analyze cached user data** and generate full financial reports.
+- Enable user authentication and **secure record storage** in a cloud backend.
+
+These individual tools were later scrapped in favor of a **more advanced, unified application**, currently in development.
+
+---
+
+## 👨‍💻 My Role & Stack
+
+I built these tools using:
+- **HTML, CSS, JavaScript** (Frontend logic)
+- Multiple AI models and prompt engineering to assist in:
+  - Debugging
+  - Code generation
+  - Optimizations
+
+**AI Tools Used**:
+- ChatGPT
+- DeepSeek
+- Claude
+- Mistral AI
+- Loveable AI
+
+These tools reflect my:
+- Ability to **develop solo** using both AI and programming knowledge.
+- Skill in **frontend engineering** with strong problem-solving mindset.
+
+---
+
+## 🇮🇳 Made for Indian Financial Context
+
+- Depreciation rates, legal structure, and calculations were tailored to **Indian tax law** and **asset classes**.
+- Designed to support freelancers, small business owners, and individuals managing assets or planning IT filings.
+
+---
+
+## 🗂️ Repo Structure
+
