@@ -2,7 +2,8 @@
 
 This repository contains **13 front-end financial tools** I built during my **2nd year of B.Tech in Computer Science & Engineering (Data Science)**. These tools were originally designed for my **startup project**, which aimed to simplify personal and business finance management for Indian users.
 
----
+
+<img width="1518" height="711" alt="fin13" src="https://github.com/user-attachments/assets/39241309-2354-4915-a059-b4f103357460" />
 
 ## 🛠️ Project Overview
 
@@ -21,6 +22,8 @@ The tools were part of a broader mission:
 
 > 🧾 To empower everyday Indians to manage finances, tabulate records, and generate IT-compliant reports — without requiring an accountant or advanced financial knowledge.
 
+<img width="1550" height="847" alt="tally" src="https://github.com/user-attachments/assets/477af55e-b0d5-462a-a786-1ffaec228f62" />
+
 Originally, we planned to:
 
 * Integrate AI to **analyze cached user data** and generate full financial reports.
@@ -31,6 +34,7 @@ These individual tools were later scrapped in favor of a **more advanced, unifie
 ---
 
 ## 👨‍💻 My Role & Stack
+<img width="816" height="585" alt="htmljjj" src="https://github.com/user-attachments/assets/34f58b2a-bbe9-4ef3-a5a3-83405d7286cf" />
 
 I built these tools using:
 
@@ -40,6 +44,7 @@ I built these tools using:
   * Debugging
   * Code generation
   * Optimizations
+<img width="1023" height="833" alt="transac" src="https://github.com/user-attachments/assets/a3844b74-617c-4e5c-9b8f-0d61b628e0b6" />
 
 **AI Tools Used**:
 
